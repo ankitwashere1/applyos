@@ -2,331 +2,491 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>applyOS — Job Search Command Center</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>applyOS</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css"/>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#09090e;--bg2:#111118;--bg3:#18181f;--bg4:#22222c;
-  --line:rgba(255,255,255,.06);--line2:rgba(255,255,255,.11);--line3:rgba(255,255,255,.18);
-  --text:#eeeef5;--text2:#8888a8;--text3:#4a4a68;
-  --acc:#7c6fe0;--acc2:#a99cf5;--acc-bg:rgba(124,111,224,.1);--acc-line:rgba(124,111,224,.28);
-  --green:#3dd68c;--green-bg:rgba(61,214,140,.09);--green-line:rgba(61,214,140,.22);
-  --amber:#f5a623;--amber-bg:rgba(245,166,35,.09);--amber-line:rgba(245,166,35,.22);
-  --red:#f05c5c;--red-bg:rgba(240,92,92,.09);--red-line:rgba(240,92,92,.22);
-  --blue:#4fa3f7;--blue-bg:rgba(79,163,247,.09);--blue-line:rgba(79,163,247,.22);
+  --bg:#08080d;--bg2:#101018;--bg3:#17171f;--bg4:#1e1e28;--bg5:#25252f;
+  --line:rgba(255,255,255,.055);--line2:rgba(255,255,255,.1);--line3:rgba(255,255,255,.16);
+  --text:#ededf5;--text2:#8888a5;--text3:#4848sixty;--text3:#484865;
+  --acc:#7c6fe0;--acc2:#a99cf5;--acc3:#c4bcff;
+  --acc-bg:rgba(124,111,224,.1);--acc-line:rgba(124,111,224,.25);
+  --green:#3dd68c;--green-bg:rgba(61,214,140,.08);--green-line:rgba(61,214,140,.2);
+  --amber:#f5a623;--amber-bg:rgba(245,166,35,.08);--amber-line:rgba(245,166,35,.2);
+  --red:#f05c5c;--red-bg:rgba(240,92,92,.08);--red-line:rgba(240,92,92,.2);
+  --blue:#4fa3f7;--blue-bg:rgba(79,163,247,.08);--blue-line:rgba(79,163,247,.2);
   font-family:'Bricolage Grotesque',sans-serif;
 }
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);min-height:100vh}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-.shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.content{margin-left:220px;flex:1;min-width:0}
 
-/* SIDEBAR */
-.sidebar{background:var(--bg2);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
-.sb-head{padding:22px 18px 16px}
-.sb-logo{font-size:19px;font-weight:800;letter-spacing:-.5px}
-.sb-logo span{color:var(--acc2)}
-.sb-user{font-size:11px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace}
-.sb-divider{height:1px;background:var(--line);margin:0 18px}
-.sb-window{margin:14px 12px 0;border-radius:10px;padding:11px 13px;border:1px solid}
-.sb-window.open{background:rgba(61,214,140,.07);border-color:var(--green-line)}
-.sb-window.waiting{background:rgba(245,166,35,.06);border-color:var(--amber-line)}
-.sb-window.closed{background:var(--bg3);border-color:var(--line)}
-.sw-label{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;display:flex;align-items:center;gap:5px;margin-bottom:4px}
-.sw-label.open{color:var(--green)}
-.sw-label.waiting{color:var(--amber)}
-.sw-label.closed{color:var(--text3)}
-.sw-dot{width:5px;height:5px;border-radius:50%}
-.sw-dot.open{background:var(--green);box-shadow:0 0 5px var(--green)}
-.sw-dot.waiting{background:var(--amber)}
-.sw-dot.closed{background:var(--text3)}
-.sw-val{font-size:11px;font-weight:600;color:var(--text);line-height:1.4}
-.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:12px 12px 0}
-.sbs{background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:10px 11px}
-.sbs-n{font-size:21px;font-weight:800;color:var(--text);line-height:1}
-.sbs-l{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.3}
-.sb-nav-label{padding:14px 18px 5px;font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
-.sb-nav a{display:flex;align-items:center;gap:9px;padding:8px 18px;font-size:12px;font-weight:500;color:var(--text2);text-decoration:none;border-left:2px solid transparent;transition:all .12s}
-.sb-nav a:hover{color:var(--text);background:rgba(255,255,255,.02)}
-.sb-nav a.active{color:var(--acc2);border-left-color:var(--acc);background:var(--acc-bg)}
-.sb-nav a i{font-size:14px}
-.sb-chip{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px}
-.sb-chip.def{background:var(--bg4);color:var(--text3)}
-.sb-chip.amber{background:var(--amber-bg);color:var(--amber)}
-.sb-chip.green{background:var(--green-bg);color:var(--green)}
-.sb-chip.acc{background:var(--acc-bg);color:var(--acc2)}
-.sb-bottom{margin-top:auto;padding:12px}
-.goal-box{background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
-.goal-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+/* ── SIDEBAR ── */
+.sb-logo-wrap{padding:20px 18px 14px}
+.sb-logo{font-size:18px;font-weight:800;letter-spacing:-.4px}
+.sb-logo em{color:var(--acc2);font-style:normal}
+.sb-tagline{font-size:10px;color:var(--text3);margin-top:2px;font-family:'DM Mono',monospace}
+.sb-div{height:1px;background:var(--line);margin:0 16px}
+.win-card{margin:12px 10px 0;border-radius:9px;padding:10px 12px;border:1px solid}
+.win-card.open-win{background:rgba(61,214,140,.07);border-color:var(--green-line)}
+.win-card.wait-win{background:rgba(245,166,35,.06);border-color:var(--amber-line)}
+.win-card.shut-win{background:var(--bg3);border-color:var(--line)}
+.win-lbl{font-size:8px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.win-lbl.open-win{color:var(--green)} .win-lbl.wait-win{color:var(--amber)} .win-lbl.shut-win{color:var(--text3)}
+.win-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.win-dot.open-win{background:var(--green);box-shadow:0 0 5px var(--green)}
+.win-dot.wait-win{background:var(--amber)} .win-dot.shut-win{background:var(--text3)}
+.win-val{font-size:10px;font-weight:500;color:var(--text2);line-height:1.4}
+.sb-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 10px 0}
+.sst{background:var(--bg3);border:1px solid var(--line);border-radius:7px;padding:9px 10px}
+.sst-n{font-size:20px;font-weight:800;line-height:1}
+.sst-l{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.3}
+.sb-sec{padding:12px 16px 4px;font-size:8px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase}
+.sb-nav{display:flex;flex-direction:column}
+.sn-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .12s;user-select:none}
+.sn-item:hover{color:var(--text);background:rgba(255,255,255,.025)}
+.sn-item.active{color:var(--acc2);border-left-color:var(--acc);background:var(--acc-bg)}
+.sn-item i{font-size:14px;opacity:.8}
+.sn-chip{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px}
+.sn-chip.d{background:var(--bg5);color:var(--text3)}
+.sn-chip.a{background:var(--amber-bg);color:var(--amber)}
+.sn-chip.g{background:var(--green-bg);color:var(--green)}
+.sb-foot{margin-top:auto;padding:10px}
+.goal-box{background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.goal-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .goal-lbl{font-size:10px;font-weight:600;color:var(--text2)}
-.goal-val{font-size:11px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc2)}
+.goal-n{font-size:10px;font-weight:700;font-family:'DM Mono',monospace;color:var(--acc2)}
 .goal-track{height:3px;background:var(--line2);border-radius:2px;overflow:hidden}
-.goal-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:2px;transition:width .6s ease}
+.goal-bar{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .5s ease}
 
-/* MAIN */
-.main{padding:28px 30px;min-width:0}
-.page-head{margin-bottom:20px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
-.page-title-wrap .page-title{font-size:24px;font-weight:800;letter-spacing:-.4px}
-.page-title-wrap .page-sub{font-size:12px;color:var(--text2);margin-top:3px}
-.btn-add{display:flex;align-items:center;gap:6px;padding:9px 15px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0}
-.btn-add:hover{background:var(--acc2);transform:translateY(-1px)}
+/* ── PAGES ── */
+.page{display:none;padding:28px 32px;max-width:860px;animation:pgIn .18s ease}
+.page.active{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.page-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:22px}
+.ph-title{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.ph-sub{font-size:12px;color:var(--text2);margin-top:3px}
 
-/* TABS */
-.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:16px}
-.tab{font-size:11px;font-weight:600;padding:7px 13px 9px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;letter-spacing:.2px}
-.tab:hover{color:var(--text2)}
-.tab.active{color:var(--acc2);border-bottom-color:var(--acc)}
-
-/* ADD FORM */
-.add-form{background:var(--bg2);border:1px solid var(--line2);border-radius:14px;margin-bottom:16px;overflow:hidden;display:none}
-.add-form.open{display:block;animation:popIn .18s ease}
-@keyframes popIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-
-/* JD PASTE STEP */
-.step-jd{padding:20px}
-.step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
-.step-sub{font-size:12px;color:var(--text2);margin-bottom:14px}
-.jd-textarea{width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:9px;color:var(--text);font-size:12px;padding:12px 14px;font-family:'Bricolage Grotesque',sans-serif;resize:vertical;min-height:110px;outline:none;line-height:1.6;transition:border .15s}
-.jd-textarea:focus{border-color:var(--acc)}
-.jd-actions{display:flex;gap:8px;margin-top:10px;align-items:center}
-.btn-parse{display:flex;align-items:center;gap:7px;padding:9px 16px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;transition:all .15s}
-.btn-parse:hover{background:var(--acc2)}
-.btn-parse:disabled{opacity:.5;cursor:not-allowed}
-.btn-manual{padding:9px 14px;background:transparent;color:var(--text2);border:1px solid var(--line2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif}
-.btn-manual:hover{background:var(--bg3)}
-.parse-status{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px}
-.parse-spinner{width:12px;height:12px;border:2px solid var(--line2);border-top-color:var(--acc2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* FIELDS STEP */
-.step-fields{padding:0 20px 20px;display:none}
-.step-fields.open{display:block}
-.fields-divider{height:1px;background:var(--line);margin:0 -20px 18px}
-.ai-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--acc2);background:var(--acc-bg);border:1px solid var(--acc-line);border-radius:6px;padding:3px 8px;margin-bottom:12px}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
-.ff{display:flex;flex-direction:column;gap:4px}
-.ff.full{grid-column:1/-1}
-.fl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.9px;text-transform:uppercase}
-.ff input,.ff select,.ff textarea{background:var(--bg3);border:1px solid var(--line2);border-radius:7px;color:var(--text);font-size:12px;padding:8px 11px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border .15s;-webkit-appearance:none}
-.ff select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238888a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
-.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--acc)}
-.ff input::placeholder,.ff textarea::placeholder{color:var(--text3)}
-.ff textarea{resize:vertical;min-height:75px;line-height:1.55}
-.ff input.ai-filled{border-color:var(--acc-line);background:rgba(124,111,224,.05)}
-.form-actions{display:flex;gap:8px;margin-top:12px}
-.btn-save{flex:1;padding:10px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;transition:all .15s}
-.btn-save:hover{background:var(--acc2)}
-.btn-cancel{padding:10px 16px;background:transparent;color:var(--text2);border:1px solid var(--line2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif}
-.btn-cancel:hover{background:var(--bg3)}
-.btn-back{padding:10px 14px;background:transparent;color:var(--text2);border:1px solid var(--line2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;display:flex;align-items:center;gap:5px}
-
-/* API KEY BANNER */
-.api-banner{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);display:flex;align-items:flex-start;gap:9px;display:none}
-.api-banner.show{display:flex}
-.api-banner i{font-size:16px;flex-shrink:0;margin-top:1px}
-.api-banner-text{flex:1;line-height:1.5}
-.api-banner-text a{color:var(--amber);font-weight:700}
-.api-key-row{display:flex;gap:7px;margin-top:8px}
-.api-key-input{flex:1;background:rgba(0,0,0,.3);border:1px solid var(--amber-line);border-radius:6px;color:var(--text);font-size:12px;padding:7px 10px;font-family:'DM Mono',monospace;outline:none}
-.btn-save-key{padding:7px 12px;background:var(--amber);color:#000;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif}
-
-/* JOB CARDS */
-.job-list{display:flex;flex-direction:column;gap:9px}
-.jcard{background:var(--bg2);border:1px solid var(--line);border-radius:13px;overflow:hidden;transition:border .15s,box-shadow .15s}
-.jcard:hover{border-color:var(--line2);box-shadow:0 4px 20px rgba(0,0,0,.35)}
-.jcard.applied{opacity:.5}
-.jcard-top{display:flex;align-items:center;gap:13px;padding:14px 16px;cursor:pointer;user-select:none}
-.jc-init{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;font-family:'DM Mono',monospace}
-.jc-meta{flex:1;min-width:0}
-.jc-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.jc-co{font-size:11px;color:var(--text2);margin-top:2px}
-.jc-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
-.type-tag{font-size:9px;font-weight:700;padding:3px 7px;border-radius:5px;background:var(--bg4);color:var(--text3);border:1px solid var(--line);letter-spacing:.2px}
-.spill{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid;letter-spacing:.2px}
-.spill-ready{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
-.spill-applied{background:var(--green-bg);color:var(--green);border-color:var(--green-line)}
-.spill-tailoring{background:var(--bg3);color:var(--text3);border-color:var(--line)}
-.chev{font-size:15px;color:var(--text3);transition:transform .2s}
-.chev.open{transform:rotate(180deg)}
-.jcard-detail{display:none;border-top:1px solid var(--line);padding:14px 16px}
-.jcard-detail.open{display:block;animation:fadeUp .15s ease}
-@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}
-.dblock{background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
-.dblock.full{grid-column:1/-1}
-.dblock-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.9px;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:5px}
-.dblock-lbl i{font-size:11px}
-.dblock-txt{font-size:11px;color:var(--text2);line-height:1.65}
-.ext-link{display:flex;align-items:center;gap:7px;padding:8px 11px;background:var(--bg);border:1px solid var(--line2);border-radius:7px;text-decoration:none;font-size:11px;font-weight:600;color:var(--acc2);transition:all .15s;margin-top:4px}
-.ext-link:hover{background:var(--acc-bg);border-color:var(--acc-line)}
-.ext-link i{font-size:13px}
-.no-link{font-size:11px;color:var(--text3);font-style:italic}
-.detail-actions{display:flex;gap:7px}
-.btn-mark-applied{flex:1;padding:9px;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;background:var(--acc);color:#fff}
-.btn-mark-applied:hover{background:var(--acc2)}
-.btn-mark-ready{flex:1;padding:9px;border:1px solid var(--amber-line);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--amber-bg);color:var(--amber);transition:all .15s}
-.btn-done{flex:1;padding:9px;background:var(--green-bg);border:1px solid var(--green-line);border-radius:7px;font-size:11px;font-weight:700;color:var(--green);font-family:'Bricolage Grotesque',sans-serif;display:flex;align-items:center;justify-content:center;gap:5px;cursor:default}
-.btn-icon{padding:9px 11px;background:transparent;border:1px solid var(--line2);border-radius:7px;color:var(--text3);cursor:pointer;font-size:13px;transition:all .15s;display:flex;align-items:center}
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;transition:all .14s;letter-spacing:.1px}
+.btn-acc{background:var(--acc);color:#fff}.btn-acc:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--line2)}.btn-ghost:hover{background:var(--bg3)}
+.btn-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}.btn-green:hover{background:rgba(61,214,140,.14)}
+.btn-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+.btn-red{background:var(--red-bg);color:var(--red);border:1px solid var(--red-line)}.btn-red:hover{background:rgba(240,92,92,.14)}
+.btn-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line);cursor:default}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.btn-sm{padding:6px 11px;font-size:11px}
+.btn-icon{padding:8px;background:transparent;border:1px solid var(--line2);border-radius:7px;color:var(--text3);cursor:pointer;font-size:13px;transition:all .14s;display:inline-flex;align-items:center}
 .btn-icon:hover{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
 .btn-icon.edit:hover{background:var(--acc-bg);border-color:var(--acc-line);color:var(--acc2)}
 
-/* NEXT-UP BANNER */
-.next-up{background:linear-gradient(90deg,rgba(124,111,224,.12),rgba(61,214,140,.06));border:1px solid var(--acc-line);border-radius:9px;padding:10px 13px;margin-bottom:12px;font-size:12px;font-weight:600;color:var(--acc2);display:flex;align-items:center;gap:8px}
-.next-up i{font-size:15px}
+/* ── CARDS / BLOCKS ── */
+.card{background:var(--bg2);border:1px solid var(--line);border-radius:13px;overflow:hidden;transition:border .14s,box-shadow .14s}
+.card:hover{border-color:var(--line2)}
+.block{background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:13px 14px}
+.block-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.9px;text-transform:uppercase;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.block-lbl i{font-size:11px}
+.block-txt{font-size:12px;color:var(--text2);line-height:1.65}
 
-/* EMPTY */
-.empty{text-align:center;padding:60px 20px;color:var(--text3)}
-.empty i{font-size:40px;display:block;margin-bottom:10px;opacity:.25}
-.empty p{font-size:13px;line-height:1.6}
-.empty strong{color:var(--text2)}
+/* ── PILLS ── */
+.pill{font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid;letter-spacing:.2px}
+.pill-ready{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-line)}
+.pill-applied{background:var(--green-bg);color:var(--green);border-color:var(--green-line)}
+.pill-tailoring{background:var(--bg4);color:var(--text3);border-color:var(--line)}
+.type-tag{font-size:9px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--bg5);color:var(--text3);border:1px solid var(--line);letter-spacing:.2px}
 
-/* TOAST */
-.toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--line2);border-radius:9px;padding:11px 15px;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.6);z-index:9999;transform:translateY(8px);opacity:0;transition:all .22s}
+/* ── FORM FIELDS ── */
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
+.fg input,.fg select,.fg textarea{background:var(--bg3);border:1px solid var(--line2);border-radius:7px;color:var(--text);font-size:12px;padding:8px 11px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border .14s;-webkit-appearance:none}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%238888a5' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--acc)}
+.fg input::placeholder,.fg textarea::placeholder{color:var(--text3);font-size:11px}
+.fg textarea{resize:vertical;line-height:1.55}
+.fg input.ai-filled{border-color:var(--acc-line);background:rgba(124,111,224,.06)}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fgrid .fg.full{grid-column:1/-1}
+
+/* ── TABS ── */
+.tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:16px}
+.tab{font-size:11px;font-weight:600;padding:7px 12px 9px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--acc2);border-bottom-color:var(--acc)}
+
+/* ── SPINNER ── */
+.spinner{width:13px;height:13px;border:2px solid var(--line2);border-top-color:var(--acc2);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--bg3);border:1px solid var(--line2);border-radius:9px;padding:11px 15px;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;box-shadow:0 8px 28px rgba(0,0,0,.65);z-index:9999;transform:translateY(8px);opacity:0;transition:all .2s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 
-/* RESPONSIVE */
-@media(max-width:700px){
-  .shell{grid-template-columns:1fr}
-  .sidebar{position:static;height:auto}
-  .main{padding:16px}
-  .form-grid,.detail-grid{grid-template-columns:1fr}
-  .ff.full,.dblock.full{grid-column:1}
-  .page-head{flex-direction:column;gap:10px}
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--line2);border-radius:16px;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:17px;font-weight:800}
+.modal-close{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:18px;padding:4px;transition:color .12s}
+.modal-close:hover{color:var(--text)}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:55px 20px;color:var(--text3)}
+.empty i{font-size:36px;display:block;margin-bottom:10px;opacity:.2}
+.empty p{font-size:13px;line-height:1.7}
+.empty strong{color:var(--text2)}
+
+/* ── API KEY BANNER ── */
+.api-warn{background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--amber);display:none;gap:9px;align-items:flex-start}
+.api-warn.show{display:flex}
+.api-warn i{font-size:15px;margin-top:1px;flex-shrink:0}
+.api-warn-body{flex:1;line-height:1.5}
+.api-warn-body a{color:var(--amber);font-weight:700}
+.api-key-row{display:flex;gap:7px;margin-top:8px}
+.api-key-inp{flex:1;background:rgba(0,0,0,.25);border:1px solid var(--amber-line);border-radius:6px;color:var(--text);font-size:12px;padding:7px 10px;font-family:'DM Mono',monospace;outline:none}
+.btn-save-key{padding:7px 13px;background:var(--amber);color:#000;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;white-space:nowrap}
+
+/* ══════════════════════════════
+   PAGE: DASHBOARD
+══════════════════════════════ */
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+.dash-stat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.dash-stat-n{font-size:30px;font-weight:800;line-height:1}
+.dash-stat-l{font-size:11px;color:var(--text2);margin-top:4px}
+.dash-stat-icon{position:absolute;right:14px;top:14px;font-size:22px;opacity:.08;color:var(--text)}
+.next-up{background:linear-gradient(90deg,rgba(124,111,224,.12),rgba(61,214,140,.06));border:1px solid var(--acc-line);border-radius:9px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:9px;font-size:12px;font-weight:600;color:var(--acc2)}
+.next-up i{font-size:15px;flex-shrink:0}
+.quick-jobs{display:flex;flex-direction:column;gap:7px}
+.qjob{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .13s}
+.qjob:hover{border-color:var(--line2);background:var(--bg3)}
+.qj-init{width:36px;height:36px;border-radius:8px;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'DM Mono',monospace}
+.qj-info{flex:1;min-width:0}
+.qj-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qj-co{font-size:11px;color:var(--text2);margin-top:1px}
+.qj-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.chev{font-size:14px;color:var(--text3);transition:transform .2s}
+.chev.open{transform:rotate(180deg)}
+.jdetail{display:none;border-top:1px solid var(--line);padding:14px 15px}
+.jdetail.open{display:block;animation:pgIn .15s ease}
+.jd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.jd-block{background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:11px 12px}
+.jd-block.full{grid-column:1/-1}
+.jd-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:.9px;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:4px}
+.jd-lbl i{font-size:11px}
+.jd-txt{font-size:11px;color:var(--text2);line-height:1.65}
+.ext-link{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bg);border:1px solid var(--line2);border-radius:6px;text-decoration:none;font-size:11px;font-weight:600;color:var(--acc2);transition:all .13s;margin-top:3px}
+.ext-link:hover{background:var(--acc-bg);border-color:var(--acc-line)}
+.ext-link i{font-size:12px}
+.jd-actions{display:flex;gap:7px;flex-wrap:wrap}
+
+/* ══════════════════════════════
+   PAGE: ADD JOB
+══════════════════════════════ */
+.add-steps{display:flex;align-items:center;gap:8px;margin-bottom:22px;font-size:11px;font-weight:600}
+.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.step-dot.done{background:var(--green);color:#000}
+.step-dot.active{background:var(--acc);color:#fff}
+.step-dot.todo{background:var(--bg3);color:var(--text3);border:1px solid var(--line2)}
+.step-line{flex:1;height:1px;background:var(--line2)}
+.step-lbl{color:var(--text3)}
+.step-lbl.active{color:var(--text)}
+.step-panel{display:none}
+.step-panel.active{display:block;animation:pgIn .16s ease}
+
+/* job info panel (after parse) */
+.parsed-card{background:var(--bg3);border:1px solid var(--acc-line);border-radius:12px;padding:18px;margin-bottom:16px}
+.parsed-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--acc2);background:var(--acc-bg);border:1px solid var(--acc-line);border-radius:6px;padding:3px 9px;margin-bottom:12px}
+.parsed-title{font-size:18px;font-weight:800;margin-bottom:2px}
+.parsed-co{font-size:13px;color:var(--text2);margin-bottom:12px}
+.parsed-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.parsed-chip{font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid}
+.highlights{display:flex;flex-direction:column;gap:5px;margin-top:10px}
+.highlight{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);line-height:1.55}
+.highlight i{font-size:12px;color:var(--acc2);margin-top:2px;flex-shrink:0}
+
+/* ══════════════════════════════
+   PAGE: RESUME
+══════════════════════════════ */
+.resume-upload-zone{border:1.5px dashed var(--line2);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:16px}
+.resume-upload-zone:hover,.resume-upload-zone.drag{border-color:var(--acc);background:var(--acc-bg)}
+.resume-upload-zone i{font-size:28px;color:var(--text3);display:block;margin-bottom:8px}
+.ruz-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.ruz-sub{font-size:11px;color:var(--text2)}
+.resume-stored{background:var(--bg3);border:1px solid var(--green-line);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.rs-icon{font-size:24px;color:var(--green)}
+.rs-info{flex:1}
+.rs-name{font-size:13px;font-weight:700}
+.rs-sub{font-size:11px;color:var(--text2);margin-top:2px}
+.resume-preview{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:18px;font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap;max-height:340px;overflow-y:auto;font-family:'DM Mono',monospace;word-break:break-word}
+.prompt-box{background:var(--bg3);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:16px}
+.prompt-lbl{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.prompt-lbl i{font-size:14px;color:var(--acc2)}
+.prompt-area{width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:8px;color:var(--text);font-size:11px;padding:10px 12px;font-family:'DM Mono',monospace;resize:vertical;min-height:120px;outline:none;line-height:1.6;transition:border .14s}
+.prompt-area:focus{border-color:var(--acc)}
+
+/* ══════════════════════════════
+   PAGE: TAILOR MODAL
+══════════════════════════════ */
+.tailor-progress{background:var(--bg3);border:1px solid var(--line);border-radius:9px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:12px;font-weight:600;color:var(--text2)}
+.tailor-progress i{font-size:18px;color:var(--acc2)}
+.resume-output{background:#fff;border-radius:10px;padding:24px;color:#111;font-size:12px;line-height:1.7;max-height:420px;overflow-y:auto;margin-bottom:14px;font-family:Arial,sans-serif;white-space:pre-wrap;word-break:break-word}
+.resume-output h1{font-size:16px;font-weight:700;margin-bottom:2px;border-bottom:1.5px solid #1a3a6e;padding-bottom:4px;margin-bottom:8px}
+.resume-output h2{font-size:12px;font-weight:700;color:#1a3a6e;margin:12px 0 4px;border-bottom:1px solid #d0d8e8;padding-bottom:2px;text-transform:uppercase;letter-spacing:.5px}
+.resume-output h3{font-size:12px;font-weight:700;margin:8px 0 1px}
+.resume-output ul{padding-left:16px;margin:2px 0}
+.resume-output li{margin-bottom:2px}
+.resume-output p{margin-bottom:4px}
+.resume-output .contact{font-size:11px;color:#555;margin-bottom:10px}
+.dl-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+@media(max-width:680px){
+  .sidebar{width:100%;position:static;height:auto}
+  .content{margin-left:0}
+  .page{padding:16px}
+  .dash-grid{grid-template-columns:1fr 1fr}
+  .fgrid,.jd-grid{grid-template-columns:1fr}
+  .fgrid .fg.full,.jd-block.full{grid-column:1}
 }
 </style>
 </head>
 <body>
-<div class="shell">
+<div class="app">
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
-  <div class="sb-head">
-    <div class="sb-logo">apply<span>OS</span></div>
-    <div class="sb-user">Ankit Passi · Job Pipeline</div>
+  <div class="sb-logo-wrap">
+    <div class="sb-logo">apply<em>OS</em></div>
+    <div class="sb-tagline">Ankit Passi · Pipeline</div>
   </div>
-  <div class="sb-divider"></div>
-
-  <div id="sb-window" class="sb-window closed" style="margin:14px 12px 0">
-    <div class="sw-label closed" id="sw-label"><span class="sw-dot closed" id="sw-dot"></span><span id="sw-label-text">Loading...</span></div>
-    <div class="sw-val" id="sw-val"></div>
+  <div class="sb-div"></div>
+  <div id="win-card" class="win-card shut-win">
+    <div class="win-lbl shut-win" id="win-lbl"><span class="win-dot shut-win" id="win-dot"></span><span id="win-lbl-txt">Loading</span></div>
+    <div class="win-val" id="win-val"></div>
   </div>
-
   <div class="sb-stats">
-    <div class="sbs"><div class="sbs-n" id="s-ready">0</div><div class="sbs-l">Ready to apply</div></div>
-    <div class="sbs"><div class="sbs-n" id="s-today">0</div><div class="sbs-l">Applied today</div></div>
-    <div class="sbs"><div class="sbs-n" id="s-total">0</div><div class="sbs-l">Total tracked</div></div>
-    <div class="sbs"><div class="sbs-n" id="s-rate">0%</div><div class="sbs-l">Applied rate</div></div>
+    <div class="sst"><div class="sst-n" id="s-ready">0</div><div class="sst-l">Ready</div></div>
+    <div class="sst"><div class="sst-n" id="s-today">0</div><div class="sst-l">Today</div></div>
+    <div class="sst"><div class="sst-n" id="s-total">0</div><div class="sst-l">Total</div></div>
+    <div class="sst"><div class="sst-n" id="s-rate">0%</div><div class="sst-l">Rate</div></div>
   </div>
-
-  <div class="sb-nav-label">Queue</div>
-  <nav class="sb-nav">
-    <a href="#" class="active" onclick="return setTab('all',this)"><i class="ti ti-layout-list"></i>All jobs<span class="sb-chip def" id="nc-all">0</span></a>
-    <a href="#" onclick="return setTab('ready',this)"><i class="ti ti-rocket"></i>Ready to apply<span class="sb-chip amber" id="nc-ready">0</span></a>
-    <a href="#" onclick="return setTab('tailoring',this)"><i class="ti ti-pencil"></i>Needs tailoring<span class="sb-chip def" id="nc-tailoring">0</span></a>
-    <a href="#" onclick="return setTab('applied',this)"><i class="ti ti-circle-check"></i>Applied<span class="sb-chip green" id="nc-applied">0</span></a>
-  </nav>
-
-  <div class="sb-bottom">
+  <div class="sb-sec">Navigation</div>
+  <div class="sb-nav">
+    <div class="sn-item active" onclick="nav('dashboard')"><i class="ti ti-home"></i>Dashboard<span class="sn-chip d" id="nc-ready">0</span></div>
+    <div class="sn-item" onclick="nav('addjob')"><i class="ti ti-plus-circle"></i>Add job</div>
+    <div class="sn-item" onclick="nav('pipeline')"><i class="ti ti-layout-list"></i>Pipeline<span class="sn-chip d" id="nc-all">0</span></div>
+    <div class="sn-item" onclick="nav('applied')"><i class="ti ti-circle-check"></i>Applied<span class="sn-chip g" id="nc-applied">0</span></div>
+    <div class="sn-item" onclick="nav('resume')"><i class="ti ti-file-text"></i>Master resume</div>
+    <div class="sn-item" onclick="nav('settings')"><i class="ti ti-settings"></i>Settings</div>
+  </div>
+  <div class="sb-foot">
     <div class="goal-box">
-      <div class="goal-top"><span class="goal-lbl">Daily goal (15–25)</span><span class="goal-val" id="goal-val">0 / 15</span></div>
-      <div class="goal-track"><div class="goal-fill" id="goal-fill" style="width:0%"></div></div>
+      <div class="goal-row"><span class="goal-lbl">Daily goal</span><span class="goal-n" id="goal-n">0/15</span></div>
+      <div class="goal-track"><div class="goal-bar" id="goal-bar" style="width:0%"></div></div>
     </div>
   </div>
 </aside>
 
-<!-- MAIN -->
-<main class="main">
+<!-- CONTENT -->
+<div class="content">
 
-  <!-- API key banner -->
-  <div class="api-banner" id="api-banner">
+<!-- ══ PAGE: DASHBOARD ══ -->
+<div id="pg-dashboard" class="page active">
+  <div class="api-warn" id="api-warn">
     <i class="ti ti-key"></i>
-    <div class="api-banner-text">
-      To auto-fill jobs from JD paste, add your Anthropic API key. Free to get at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Stored only in your browser, never sent anywhere except Anthropic.
-      <div class="api-key-row">
-        <input class="api-key-input" id="api-key-input" type="password" placeholder="sk-ant-..."/>
-        <button class="btn-save-key" onclick="saveApiKey()">Save key</button>
-      </div>
+    <div class="api-warn-body">Add your Anthropic API key to enable AI job parsing and resume tailoring. Free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
+      <div class="api-key-row"><input class="api-key-inp" id="api-key-inp" type="password" placeholder="sk-ant-..."/><button class="btn-save-key" onclick="saveApiKey()">Save</button></div>
     </div>
   </div>
-
-  <div class="page-head">
-    <div class="page-title-wrap">
-      <div class="page-title" id="page-title">All jobs</div>
-      <div class="page-sub" id="page-sub">Your full pipeline.</div>
-    </div>
-    <button class="btn-add" onclick="openForm()"><i class="ti ti-plus"></i>Add job</button>
+  <div class="page-hd">
+    <div><div class="ph-title">Dashboard</div><div class="ph-sub" id="dash-date"></div></div>
+    <button class="btn btn-acc" onclick="nav('addjob')"><i class="ti ti-plus"></i>Add job</button>
   </div>
-
-  <!-- ADD FORM -->
-  <div class="add-form" id="add-form">
-    <!-- STEP 1: JD paste -->
-    <div class="step-jd" id="step-jd">
-      <div class="step-title" id="form-step-title">Add a new job</div>
-      <div class="step-sub">Paste the job description and Claude will fill in the details automatically, or skip to fill them in manually.</div>
-      <textarea class="jd-textarea" id="jd-input" placeholder="Paste the full job description here..."></textarea>
-      <div class="jd-actions">
-        <button class="btn-parse" id="parse-btn" onclick="parseJD()"><i class="ti ti-sparkles"></i>Auto-fill with AI</button>
-        <button class="btn-manual" onclick="skipToFields()">Fill in manually</button>
-        <div class="parse-status" id="parse-status" style="display:none"><div class="parse-spinner"></div><span>Extracting job details...</span></div>
-      </div>
-    </div>
-    <!-- STEP 2: Fields -->
-    <div class="step-fields" id="step-fields">
-      <div class="fields-divider"></div>
-      <div id="ai-badge-wrap"></div>
-      <div class="form-grid">
-        <div class="ff"><label class="fl">Job title *</label><input id="f-title" placeholder="e.g. Quality Engineer"/></div>
-        <div class="ff"><label class="fl">Company *</label><input id="f-company" placeholder="e.g. Teledyne"/></div>
-        <div class="ff"><label class="fl">Location</label><input id="f-loc" placeholder="e.g. Baltimore, MD (Hybrid)"/></div>
-        <div class="ff"><label class="fl">Job type</label>
-          <select id="f-type"><option>Full-time</option><option>Contract</option><option>Federal</option><option>Part-time</option><option>Remote</option></select>
-        </div>
-        <div class="ff full"><label class="fl">Google Drive resume link</label><input id="f-drive" placeholder="Paste shareable Google Drive link to your tailored .docx resume"/></div>
-        <div class="ff full"><label class="fl">Apply URL</label><input id="f-url" placeholder="https://careers.company.com/job/..."/></div>
-        <div class="ff full"><label class="fl">Job description</label><textarea id="f-jd" placeholder="Key requirements and responsibilities..."></textarea></div>
-        <div class="ff full"><label class="fl">Notes / recruiter info</label><textarea id="f-notes" placeholder="Salary range, recruiter name, company notes, follow-up dates..." style="min-height:55px"></textarea></div>
-        <div class="ff"><label class="fl">Status</label>
-          <select id="f-status"><option value="tailoring">Needs tailoring</option><option value="ready">Ready to apply</option></select>
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn-save" onclick="saveJob()">Save job</button>
-        <button class="btn-back" onclick="backToJD()"><i class="ti ti-arrow-left"></i>Back</button>
-        <button class="btn-cancel" onclick="closeForm()">Cancel</button>
-      </div>
-    </div>
+  <div class="dash-grid">
+    <div class="dash-stat"><div class="dash-stat-n" id="ds-ready">0</div><div class="dash-stat-l">Ready to apply</div><i class="ti ti-rocket dash-stat-icon"></i></div>
+    <div class="dash-stat"><div class="dash-stat-n" id="ds-today">0</div><div class="dash-stat-l">Applied today</div><i class="ti ti-check dash-stat-icon"></i></div>
+    <div class="dash-stat"><div class="dash-stat-n" id="ds-total">0</div><div class="dash-stat-l">Total tracked</div><i class="ti ti-briefcase dash-stat-icon"></i></div>
+    <div class="dash-stat"><div class="dash-stat-n" id="ds-tailoring">0</div><div class="dash-stat-l">Need tailoring</div><i class="ti ti-pencil dash-stat-icon"></i></div>
   </div>
-
-  <!-- next up banner -->
   <div id="next-banner" style="display:none"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase">Today's queue</div>
+    <button class="btn btn-ghost btn-sm" onclick="nav('pipeline')">View all</button>
+  </div>
+  <div id="dash-jobs"></div>
+  <div id="dash-empty" style="display:none" class="empty"><i class="ti ti-inbox"></i><p>No jobs yet.<br/><strong>Click "Add job"</strong> to start your pipeline.</p></div>
+</div>
 
+<!-- ══ PAGE: ADD JOB ══ -->
+<div id="pg-addjob" class="page">
+  <div class="page-hd">
+    <div><div class="ph-title" id="add-page-title">Add new job</div><div class="ph-sub">Paste the JD and Claude will extract everything instantly.</div></div>
+  </div>
+  <div class="add-steps" id="add-steps">
+    <div class="step-dot active" id="sdot-1">1</div><span class="step-lbl active">Paste JD</span>
+    <div class="step-line"></div>
+    <div class="step-dot todo" id="sdot-2">2</div><span class="step-lbl" id="slbl-2">Review info</span>
+    <div class="step-line"></div>
+    <div class="step-dot todo" id="sdot-3">3</div><span class="step-lbl" id="slbl-3">Details &amp; save</span>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step-panel active" id="sp1">
+    <div class="block" style="margin-bottom:12px">
+      <div class="block-lbl"><i class="ti ti-clipboard-text"></i>Paste job description</div>
+      <textarea class="fg" id="jd-paste" style="width:100%;background:var(--bg);border:1px solid var(--line2);border-radius:7px;color:var(--text);font-size:12px;padding:10px 12px;font-family:'Bricolage Grotesque',sans-serif;outline:none;min-height:160px;line-height:1.6;resize:vertical;margin-top:4px;transition:border .14s" placeholder="Paste the full job description here. Claude will extract the title, company, location, job type, key requirements and highlights automatically..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-acc" id="parse-btn" onclick="parseJD()"><i class="ti ti-sparkles"></i>Extract with AI</button>
+        <button class="btn btn-ghost" onclick="skipToStep3()">Fill in manually</button>
+        <div id="parse-status" style="display:none;align-items:center;gap:7px;font-size:11px;color:var(--text2)"><div class="spinner"></div>Extracting details...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: parsed preview -->
+  <div class="step-panel" id="sp2">
+    <div class="parsed-card" id="parsed-preview"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-acc" onclick="goStep(3)"><i class="ti ti-arrow-right"></i>Looks good, continue</button>
+      <button class="btn btn-ghost" onclick="goStep(1)"><i class="ti ti-arrow-left"></i>Back</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: details form -->
+  <div class="step-panel" id="sp3">
+    <div class="fgrid" style="margin-bottom:12px">
+      <div class="fg"><label class="fl">Job title *</label><input id="f-title" placeholder="e.g. Quality Engineer"/></div>
+      <div class="fg"><label class="fl">Company *</label><input id="f-company" placeholder="e.g. Teledyne"/></div>
+      <div class="fg"><label class="fl">Location</label><input id="f-loc" placeholder="e.g. Baltimore, MD (Hybrid)"/></div>
+      <div class="fg"><label class="fl">Job type</label><select id="f-type"><option>Full-time</option><option>Contract</option><option>Federal</option><option>Part-time</option><option>Remote</option></select></div>
+      <div class="fg full"><label class="fl">Google Drive resume link</label><input id="f-drive" placeholder="Paste shareable Google Drive link to tailored .docx (add after tailoring)"/></div>
+      <div class="fg full"><label class="fl">Apply URL</label><input id="f-url" placeholder="https://careers.company.com/..."/></div>
+      <div class="fg full"><label class="fl">Job description / key requirements</label><textarea id="f-jd" style="min-height:90px" placeholder="Key requirements extracted from JD..."></textarea></div>
+      <div class="fg full"><label class="fl">Notes / recruiter info</label><textarea id="f-notes" style="min-height:55px" placeholder="Salary, recruiter name, follow-up dates, anything relevant..."></textarea></div>
+      <div class="fg"><label class="fl">Status</label><select id="f-status"><option value="tailoring">Needs tailoring</option><option value="ready">Ready to apply</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-acc" onclick="saveJob()"><i class="ti ti-check"></i>Save job</button>
+      <button class="btn btn-ghost" onclick="goStep(2)" id="back-to-2-btn"><i class="ti ti-arrow-left"></i>Back</button>
+      <button class="btn btn-ghost" onclick="cancelAdd()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PAGE: PIPELINE ══ -->
+<div id="pg-pipeline" class="page">
+  <div class="page-hd">
+    <div><div class="ph-title">Pipeline</div><div class="ph-sub">All tracked jobs.</div></div>
+    <button class="btn btn-acc" onclick="nav('addjob')"><i class="ti ti-plus"></i>Add job</button>
+  </div>
   <div class="tabs">
-    <button class="tab active" onclick="setTab('all',this)">All</button>
-    <button class="tab" onclick="setTab('ready',this)">Ready to apply</button>
-    <button class="tab" onclick="setTab('tailoring',this)">Needs tailoring</button>
-    <button class="tab" onclick="setTab('applied',this)">Applied</button>
+    <button class="tab active" onclick="setPipeTab('all',this)">All</button>
+    <button class="tab" onclick="setPipeTab('ready',this)">Ready</button>
+    <button class="tab" onclick="setPipeTab('tailoring',this)">Needs tailoring</button>
   </div>
+  <div id="pipe-list"></div>
+  <div id="pipe-empty" class="empty" style="display:none"><i class="ti ti-briefcase"></i><p>No jobs here yet.</p></div>
+</div>
 
-  <div class="job-list" id="job-list"></div>
-  <div class="empty" id="empty" style="display:none">
-    <i class="ti ti-briefcase"></i>
-    <p>No jobs yet.<br/><strong>Click "Add job"</strong> to start building your pipeline.<br/>Paste a JD and Claude will fill everything in for you.</p>
+<!-- ══ PAGE: APPLIED ══ -->
+<div id="pg-applied" class="page">
+  <div class="page-hd"><div><div class="ph-title">Applied</div><div class="ph-sub">Applications already submitted.</div></div></div>
+  <div id="applied-list"></div>
+  <div id="applied-empty" class="empty" style="display:none"><i class="ti ti-circle-check"></i><p>No applications submitted yet.</p></div>
+</div>
+
+<!-- ══ PAGE: MASTER RESUME ══ -->
+<div id="pg-resume" class="page">
+  <div class="page-hd"><div><div class="ph-title">Master Resume</div><div class="ph-sub">Upload your base resume. It will be used to generate all tailored versions.</div></div></div>
+  <input type="file" id="resume-file-inp" accept=".docx" style="display:none" onchange="handleResumeUpload(event)"/>
+  <div id="resume-upload-zone" class="resume-upload-zone" onclick="document.getElementById('resume-file-inp').click()">
+    <i class="ti ti-cloud-upload"></i>
+    <div class="ruz-title">Upload your master resume</div>
+    <div class="ruz-sub">Click to upload .docx file — or drag and drop</div>
   </div>
-</main>
+  <div id="resume-stored" style="display:none" class="resume-stored">
+    <i class="ti ti-file-check rs-icon"></i>
+    <div class="rs-info"><div class="rs-name" id="resume-name">resume.docx</div><div class="rs-sub" id="resume-sub">Uploaded and ready</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('resume-file-inp').click()">Replace</button>
+  </div>
+  <div id="resume-preview-wrap" style="display:none">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:7px">Preview (plain text)</div>
+    <div class="resume-preview" id="resume-preview"></div>
+  </div>
+  <div class="prompt-box">
+    <div class="prompt-lbl"><i class="ti ti-wand"></i>Resume tailoring instructions</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5">These instructions tell Claude exactly how to tailor your resume for each job. Edit as needed.</div>
+    <textarea class="prompt-area" id="tailor-prompt" rows="8"></textarea>
+    <div style="margin-top:10px"><button class="btn btn-acc btn-sm" onclick="savePrompt()"><i class="ti ti-check"></i>Save instructions</button></div>
+  </div>
+</div>
+
+<!-- ══ PAGE: SETTINGS ══ -->
+<div id="pg-settings" class="page">
+  <div class="page-hd"><div><div class="ph-title">Settings</div><div class="ph-sub">Configure applyOS.</div></div></div>
+  <div class="block" style="margin-bottom:12px">
+    <div class="block-lbl"><i class="ti ti-key"></i>Anthropic API Key</div>
+    <div class="block-txt" style="margin-bottom:10px">Required for AI job parsing and resume tailoring. Get a free key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--acc2)">console.anthropic.com</a>. Stored only in your browser.</div>
+    <div style="display:flex;gap:8px">
+      <input type="password" id="settings-key-inp" style="flex:1;background:var(--bg);border:1px solid var(--line2);border-radius:7px;color:var(--text);font-size:12px;padding:8px 11px;font-family:'DM Mono',monospace;outline:none" placeholder="sk-ant-..."/>
+      <button class="btn btn-acc btn-sm" onclick="saveApiKeyFromSettings()">Save key</button>
+    </div>
+    <div id="key-status" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+  </div>
+  <div class="block">
+    <div class="block-lbl"><i class="ti ti-trash"></i>Data</div>
+    <div class="block-txt" style="margin-bottom:10px">Clear all jobs from your pipeline. This cannot be undone.</div>
+    <button class="btn btn-red btn-sm" onclick="clearAllJobs()"><i class="ti ti-trash"></i>Clear all jobs</button>
+  </div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /app -->
+
+<!-- TAILOR MODAL -->
+<div class="modal-bg" id="tailor-modal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-title" id="tailor-modal-title">Tailoring resume...</div>
+      <button class="modal-close" onclick="closeTailorModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="tailor-status" class="tailor-progress" style="display:none">
+      <div class="spinner"></div><span id="tailor-status-txt">Generating tailored resume...</span>
+    </div>
+    <div id="tailor-output" style="display:none">
+      <div class="resume-output" id="resume-html-output"></div>
+      <div class="dl-actions">
+        <button class="btn btn-acc" onclick="downloadDocx()"><i class="ti ti-download"></i>Download as Word (.docx)</button>
+        <button class="btn btn-ghost" onclick="copyResumeText()"><i class="ti ti-copy"></i>Copy text</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><i class="ti ti-check" style="color:var(--green)"></i><span id="toast-msg"></span></div>
 
 <script>
-// ── state ──────────────────────────────────────────────
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
 let jobs = JSON.parse(localStorage.getItem('applyos_jobs') || '[]');
-let nextId = Math.max(0, ...jobs.map(j => j.id)) + 1;
-let currentTab = 'all';
+let nextId = Math.max(0, ...jobs.map(j => j.id), 0) + 1;
+let pipeTab = 'all';
 let editingId = null;
+let parsedData = null;
+let tailorJobId = null;
+let generatedResumeText = '';
+let currentPage = 'dashboard';
+
 const COLORS = [
   {bg:'#1a1535',fg:'#c4b5fd'},{bg:'#0f2320',fg:'#6ee7b7'},
   {bg:'#1f1a0e',fg:'#fcd34d'},{bg:'#1a0f1a',fg:'#f0abfc'},
@@ -335,312 +495,323 @@ const COLORS = [
   {bg:'#1a1218',fg:'#fb7185'},{bg:'#0e1820',fg:'#38bdf8'},
 ];
 
+const DEFAULT_PROMPT = `You are an expert ATS-optimized resume writer. Tailor the provided master resume for the specific job description.
+
+RULES:
+- Keep it exactly ONE page
+- Use Arial font, clean formatting
+- Keep all 4 original job titles unchanged: Blooming Treasure LLC (Founder), Leidos (QA/Validation Engineer), Social Security Administration (Help Desk & Operations Analyst), American IT Resources (QA & Business Systems Analyst)
+- Blooming Treasure LLC should be framed as an IT startup building inventory management, client booking, and workflow automation systems — NOT a flower shop
+- Move the most relevant experience bullets to the top under each role
+- Mirror keywords from the job description naturally (for ATS)
+- SQL and Python should be framed as data validation and process analysis tools, not software development
+- Include an Achievements section at the end with 2-3 punchy tailored bullets
+- No core competencies bar or skills table
+- Contact: Ankit Passi | ankitpassi422@gmail.com | (240) 751-7497 | Baltimore, MD
+- Output clean plain text with clear section headers. Use markdown: # for name, ## for sections, ### for job titles.`;
+
 function save() { localStorage.setItem('applyos_jobs', JSON.stringify(jobs)); }
-
-// ── apply window ───────────────────────────────────────
-const now = new Date();
-const h = now.getHours();
-const swWrap = document.getElementById('sb-window');
-const swLabel = document.getElementById('sw-label');
-const swDot = document.getElementById('sw-dot');
-const swLabelText = document.getElementById('sw-label-text');
-const swVal = document.getElementById('sw-val');
-if (h >= 6 && h < 10) {
-  swWrap.className = 'sb-window open';
-  swLabel.className = 'sw-label open';
-  swDot.className = 'sw-dot open';
-  swLabelText.textContent = 'Apply window open';
-  swVal.textContent = '6:00 AM – 10:00 AM · Active now';
-} else if (h < 6) {
-  swWrap.className = 'sb-window waiting';
-  swLabel.className = 'sw-label waiting';
-  swDot.className = 'sw-dot waiting';
-  swLabelText.textContent = 'Opens at 6:00 AM';
-  swVal.textContent = 'Queue your jobs tonight';
-} else {
-  swWrap.className = 'sb-window closed';
-  swLabel.className = 'sw-label closed';
-  swDot.className = 'sw-dot closed';
-  swLabelText.textContent = 'Window closed for today';
-  swVal.textContent = 'Tailoring time — queue for tomorrow';
-}
-
-// ── api key ────────────────────────────────────────────
 function getApiKey() { return localStorage.getItem('applyos_apikey') || ''; }
-function saveApiKey() {
-  const k = document.getElementById('api-key-input').value.trim();
-  if (!k) return;
-  localStorage.setItem('applyos_apikey', k);
-  document.getElementById('api-banner').classList.remove('show');
-  showToast('API key saved!');
-}
-function checkApiKey() {
-  if (!getApiKey()) document.getElementById('api-banner').classList.add('show');
-}
-checkApiKey();
+function getMasterResume() { return localStorage.getItem('applyos_master_resume') || ''; }
+function getTailorPrompt() { return localStorage.getItem('applyos_prompt') || DEFAULT_PROMPT; }
 
-// ── stats ──────────────────────────────────────────────
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+(function init() {
+  // apply window
+  const h = new Date().getHours();
+  const wc = document.getElementById('win-card');
+  const wl = document.getElementById('win-lbl');
+  const wd = document.getElementById('win-dot');
+  const wlt = document.getElementById('win-lbl-txt');
+  const wv = document.getElementById('win-val');
+  if (h >= 6 && h < 10) {
+    wc.className='win-card open-win'; wl.className='win-lbl open-win'; wd.className='win-dot open-win';
+    wlt.textContent='Apply window open'; wv.textContent='6–10 AM · Active now';
+  } else if (h < 6) {
+    wc.className='win-card wait-win'; wl.className='win-lbl wait-win'; wd.className='win-dot wait-win';
+    wlt.textContent='Opens at 6:00 AM'; wv.textContent='Queue jobs tonight';
+  } else {
+    wc.className='win-card shut-win'; wl.className='win-lbl shut-win'; wd.className='win-dot shut-win';
+    wlt.textContent='Window closed'; wv.textContent='Tailor tonight, apply tomorrow';
+  }
+  // date
+  const d = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('dash-date').textContent = `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  // api key check
+  if (!getApiKey()) document.getElementById('api-warn').classList.add('show');
+  // tailor prompt default
+  document.getElementById('tailor-prompt').value = getTailorPrompt();
+  // settings key status
+  const sk = getApiKey();
+  if (sk) {
+    document.getElementById('settings-key-inp').value = sk;
+    document.getElementById('key-status').textContent = '✓ API key saved';
+  }
+  // master resume
+  const mr = getMasterResume();
+  if (mr) showResumeStored('Master resume', mr);
+  // drag drop
+  const uz = document.getElementById('resume-upload-zone');
+  uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('drag'); });
+  uz.addEventListener('dragleave', () => uz.classList.remove('drag'));
+  uz.addEventListener('drop', e => { e.preventDefault(); uz.classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) processResumeFile(f); });
+  updateStats();
+  renderDash();
+})();
+
+// ══════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sn-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('pg-' + page).classList.add('active');
+  const idx = ['dashboard','addjob','pipeline','applied','resume','settings'].indexOf(page);
+  document.querySelectorAll('.sn-item')[idx]?.classList.add('active');
+  currentPage = page;
+  if (page === 'pipeline') renderPipeline();
+  if (page === 'applied') renderApplied();
+  if (page === 'dashboard') renderDash();
+}
+
+// ══════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════
 function updateStats() {
-  const today = now.toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
   const ready = jobs.filter(j => j.status === 'ready').length;
   const applied = jobs.filter(j => j.status === 'applied').length;
   const appToday = jobs.filter(j => j.appliedDate === today).length;
+  const tailoring = jobs.filter(j => j.status === 'tailoring').length;
   const total = jobs.length;
   const rate = total > 0 ? Math.round(applied / total * 100) : 0;
-  document.getElementById('s-ready').textContent = ready;
-  document.getElementById('s-today').textContent = appToday;
-  document.getElementById('s-total').textContent = total;
-  document.getElementById('s-rate').textContent = rate + '%';
-  document.getElementById('nc-all').textContent = total;
-  document.getElementById('nc-ready').textContent = ready;
-  document.getElementById('nc-applied').textContent = applied;
-  document.getElementById('nc-tailoring').textContent = jobs.filter(j => j.status === 'tailoring').length;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('s-ready', ready); set('s-today', appToday); set('s-total', total); set('s-rate', rate + '%');
+  set('ds-ready', ready); set('ds-today', appToday); set('ds-total', total); set('ds-tailoring', tailoring);
+  set('nc-all', total); set('nc-applied', applied); set('nc-ready', ready);
   const pct = Math.min(total / 15 * 100, 100);
-  document.getElementById('goal-fill').style.width = pct + '%';
-  document.getElementById('goal-val').textContent = `${total} / ${total >= 25 ? '25 ✓' : total >= 15 ? '15 ✓' : 15}`;
+  document.getElementById('goal-bar').style.width = pct + '%';
+  document.getElementById('goal-n').textContent = `${total}/${total >= 25 ? '25✓' : 15}`;
 }
 
-// ── tabs ───────────────────────────────────────────────
-const PAGE_TITLES = { all: 'All jobs', ready: 'Ready to apply', tailoring: 'Needs tailoring', applied: 'Applied' };
-const PAGE_SUBS = {
-  all: 'Your full pipeline.',
-  ready: 'Apply window is 6–10 AM. Click a job, open your resume, and mark it done.',
-  tailoring: 'Tailor the resume in Google Drive, paste the link in, then mark as ready.',
-  applied: 'Applications already submitted.'
-};
-function setTab(t, el) {
-  currentTab = t;
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.sb-nav a').forEach(x => x.classList.remove('active'));
-  if (el) {
-    el.classList.add('active');
-    // sync sidebar
-    const idx = ['all','ready','tailoring','applied'].indexOf(t);
-    document.querySelectorAll('.sb-nav a')[idx]?.classList.add('active');
-  }
-  document.getElementById('page-title').textContent = PAGE_TITLES[t];
-  document.getElementById('page-sub').textContent = PAGE_SUBS[t];
-  renderJobs();
-  return false;
-}
-
-// ── render ─────────────────────────────────────────────
-function renderJobs() {
-  const list = document.getElementById('job-list');
-  const empty = document.getElementById('empty');
-  let filtered = currentTab === 'all' ? jobs : jobs.filter(j => j.status === currentTab);
-  list.innerHTML = '';
+// ══════════════════════════════════════════
+//  RENDER DASHBOARD
+// ══════════════════════════════════════════
+function renderDash() {
+  const h = new Date().getHours();
   const nb = document.getElementById('next-banner');
-  if (currentTab === 'ready' && filtered.length > 0 && h >= 6 && h < 10) {
-    nb.style.display = 'flex';
-    nb.className = 'next-up';
-    nb.innerHTML = `<i class="ti ti-arrow-right"></i>Apply window is open — start with <strong style="color:var(--text);margin-left:4px">${filtered[0].title} at ${filtered[0].company}</strong>`;
+  const readyJobs = jobs.filter(j => j.status === 'ready');
+  if (h >= 6 && h < 10 && readyJobs.length > 0) {
+    nb.style.display = 'flex'; nb.className = 'next-up';
+    nb.innerHTML = `<i class="ti ti-rocket"></i>Apply window open — start with <strong style="color:var(--text);margin-left:4px">${readyJobs[0].title} at ${readyJobs[0].company}</strong>`;
   } else { nb.style.display = 'none'; }
-  if (filtered.length === 0) { empty.style.display = 'block'; return; }
+  const container = document.getElementById('dash-jobs');
+  const empty = document.getElementById('dash-empty');
+  const show = jobs.filter(j => j.status !== 'applied').slice(0, 8);
+  if (show.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
-  filtered.forEach(job => {
-    const c = COLORS[job.colorIdx % COLORS.length];
-    const sCfg = {
-      ready: { cls: 'spill-ready', label: 'Ready' },
-      applied: { cls: 'spill-applied', label: 'Applied' },
-      tailoring: { cls: 'spill-tailoring', label: 'Needs tailoring' }
-    };
-    const sc = sCfg[job.status] || sCfg.tailoring;
-    const card = document.createElement('div');
-    card.className = 'jcard' + (job.status === 'applied' ? ' applied' : '');
-    card.id = 'jc-' + job.id;
-    card.innerHTML = `
-      <div class="jcard-top" onclick="toggleCard(${job.id})">
-        <div class="jc-init" style="background:${c.bg};color:${c.fg}">${job.company.slice(0,2).toUpperCase()}</div>
-        <div class="jc-meta">
-          <div class="jc-title">${job.title}</div>
-          <div class="jc-co">${job.company} · ${job.loc || 'Location TBD'}</div>
-        </div>
-        <div class="jc-right">
-          <span class="type-tag">${job.type}</span>
-          <span class="spill ${sc.cls}">${sc.label}</span>
-          <i class="ti ti-chevron-down chev" id="chev-${job.id}"></i>
-        </div>
-      </div>
-      <div class="jcard-detail" id="cd-${job.id}">
-        <div class="detail-grid">
-          ${job.jd ? `<div class="dblock full"><div class="dblock-lbl"><i class="ti ti-file-description"></i>Job description</div><div class="dblock-txt">${job.jd.replace(/\n/g,'<br/>')}</div></div>` : ''}
-          ${job.notes ? `<div class="dblock full"><div class="dblock-lbl"><i class="ti ti-notes"></i>Notes &amp; recruiter info</div><div class="dblock-txt">${job.notes}</div></div>` : ''}
-          <div class="dblock">
-            <div class="dblock-lbl"><i class="ti ti-brand-google-drive"></i>Tailored resume</div>
-            ${job.driveLink
-              ? `<a class="ext-link" href="${job.driveLink}" target="_blank"><i class="ti ti-external-link"></i>Open in Google Drive</a>`
-              : `<span class="no-link">No resume linked yet — edit to add Drive link</span>`}
-          </div>
-          ${job.applyUrl ? `<div class="dblock"><div class="dblock-lbl"><i class="ti ti-world"></i>Apply link</div><a class="ext-link" href="${job.applyUrl}" target="_blank"><i class="ti ti-external-link"></i>Open job posting</a></div>` : ''}
-        </div>
-        <div class="detail-actions">
-          ${job.status === 'ready' ? `<button class="btn-mark-applied" onclick="markApplied(${job.id})"><i class="ti ti-check"></i>Mark as applied</button>` : ''}
-          ${job.status === 'tailoring' ? `<button class="btn-mark-ready" onclick="markReady(${job.id})"><i class="ti ti-rocket"></i>Mark as ready to apply</button>` : ''}
-          ${job.status === 'applied' ? `<button class="btn-done" disabled><i class="ti ti-circle-check"></i>Applied ${job.appliedDate || ''}</button>` : ''}
-          <button class="btn-icon edit" onclick="openEdit(${job.id})" title="Edit"><i class="ti ti-edit"></i></button>
-          <button class="btn-icon" onclick="deleteJob(${job.id})" title="Delete"><i class="ti ti-trash"></i></button>
-        </div>
-      </div>`;
-    list.appendChild(card);
-  });
+  container.innerHTML = '';
+  show.forEach(job => container.appendChild(buildJobCard(job, true)));
   updateStats();
 }
 
-function toggleCard(id) {
-  const cd = document.getElementById('cd-' + id);
-  const chev = document.getElementById('chev-' + id);
-  const isOpen = cd.classList.contains('open');
-  document.querySelectorAll('.jcard-detail').forEach(d => d.classList.remove('open'));
-  document.querySelectorAll('.chev').forEach(c => c.classList.remove('open'));
-  if (!isOpen) { cd.classList.add('open'); chev.classList.add('open'); }
+// ══════════════════════════════════════════
+//  BUILD JOB CARD
+// ══════════════════════════════════════════
+function buildJobCard(job, compact) {
+  const c = COLORS[job.colorIdx % COLORS.length];
+  const sCfg = { ready: { cls: 'pill-ready', lbl: 'Ready' }, applied: { cls: 'pill-applied', lbl: 'Applied' }, tailoring: { cls: 'pill-tailoring', lbl: 'Needs tailoring' } };
+  const sc = sCfg[job.status] || sCfg.tailoring;
+  const wrap = document.createElement('div');
+  wrap.className = 'card' + (job.status === 'applied' ? ' ' : '');
+  wrap.id = 'jcard-' + job.id;
+  wrap.style.marginBottom = '8px';
+  wrap.innerHTML = `
+    <div class="qjob" onclick="toggleJobDetail(${job.id})">
+      <div class="qj-init" style="background:${c.bg};color:${c.fg}">${job.company.slice(0,2).toUpperCase()}</div>
+      <div class="qj-info">
+        <div class="qj-title">${job.title}</div>
+        <div class="qj-co">${job.company} · ${job.loc || 'Location TBD'}</div>
+      </div>
+      <div class="qj-right">
+        <span class="type-tag">${job.type}</span>
+        <span class="pill ${sc.cls}">${sc.lbl}</span>
+        <i class="ti ti-chevron-down chev" id="chev-${job.id}"></i>
+      </div>
+    </div>
+    <div class="jdetail" id="jd-${job.id}">
+      <div class="jd-grid">
+        ${job.jd ? `<div class="jd-block full"><div class="jd-lbl"><i class="ti ti-file-description"></i>Job description</div><div class="jd-txt">${job.jd.replace(/\n/g,'<br/>')}</div></div>` : ''}
+        ${job.notes ? `<div class="jd-block full"><div class="jd-lbl"><i class="ti ti-notes"></i>Notes</div><div class="jd-txt">${job.notes}</div></div>` : ''}
+        <div class="jd-block">
+          <div class="jd-lbl"><i class="ti ti-brand-google-drive"></i>Resume</div>
+          ${job.driveLink ? `<a class="ext-link" href="${job.driveLink}" target="_blank"><i class="ti ti-external-link"></i>Open in Drive</a>` : `<span style="font-size:11px;color:var(--text3);font-style:italic">No resume linked yet</span>`}
+        </div>
+        ${job.applyUrl ? `<div class="jd-block"><div class="jd-lbl"><i class="ti ti-world"></i>Apply link</div><a class="ext-link" href="${job.applyUrl}" target="_blank"><i class="ti ti-external-link"></i>Open posting</a></div>` : ''}
+      </div>
+      <div class="jd-actions">
+        ${job.status === 'ready' ? `<button class="btn btn-acc btn-sm" onclick="markApplied(${job.id})"><i class="ti ti-check"></i>Mark applied</button>` : ''}
+        ${job.status === 'tailoring' ? `<button class="btn btn-amber btn-sm" onclick="markReady(${job.id})"><i class="ti ti-rocket"></i>Mark ready</button>` : ''}
+        ${job.status === 'applied' ? `<button class="btn btn-done btn-sm" disabled><i class="ti ti-circle-check"></i>Applied ${job.appliedDate||''}</button>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openTailor(${job.id})"><i class="ti ti-wand"></i>Tailor resume</button>
+        <button class="btn btn-ghost btn-sm" onclick="openEdit(${job.id})"><i class="ti ti-edit"></i>Edit</button>
+        <button class="btn-icon" onclick="deleteJob(${job.id})" title="Delete"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  return wrap;
 }
 
+function toggleJobDetail(id) {
+  const det = document.getElementById('jd-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const isOpen = det.classList.contains('open');
+  document.querySelectorAll('.jdetail').forEach(d => d.classList.remove('open'));
+  document.querySelectorAll('.chev').forEach(c => c.classList.remove('open'));
+  if (!isOpen) { det.classList.add('open'); chev.classList.add('open'); }
+}
+
+// ══════════════════════════════════════════
+//  PIPELINE
+// ══════════════════════════════════════════
+function setPipeTab(t, el) {
+  pipeTab = t;
+  document.querySelectorAll('#pg-pipeline .tab').forEach(x => x.classList.remove('active'));
+  el.classList.add('active');
+  renderPipeline();
+}
+function renderPipeline() {
+  const list = document.getElementById('pipe-list');
+  const empty = document.getElementById('pipe-empty');
+  let filtered = pipeTab === 'all' ? jobs.filter(j => j.status !== 'applied') : jobs.filter(j => j.status === pipeTab);
+  list.innerHTML = '';
+  if (filtered.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  filtered.forEach(job => list.appendChild(buildJobCard(job, false)));
+  updateStats();
+}
+function renderApplied() {
+  const list = document.getElementById('applied-list');
+  const empty = document.getElementById('applied-empty');
+  const filtered = jobs.filter(j => j.status === 'applied');
+  list.innerHTML = '';
+  if (filtered.length === 0) { empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  filtered.forEach(job => list.appendChild(buildJobCard(job, false)));
+}
+
+// ══════════════════════════════════════════
+//  JOB ACTIONS
+// ══════════════════════════════════════════
 function markApplied(id) {
   const j = jobs.find(x => x.id === id); if (!j) return;
-  j.status = 'applied'; j.appliedDate = now.toISOString().slice(0, 10);
-  save(); renderJobs(); showToast('Marked as applied!');
+  j.status = 'applied'; j.appliedDate = new Date().toISOString().slice(0, 10);
+  save(); refreshCurrentPage(); updateStats(); showToast('Marked as applied!');
   const next = jobs.find(x => x.status === 'ready' && x.id !== id);
-  if (next) setTimeout(() => {
-    const el = document.getElementById('jc-' + next.id);
-    if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => toggleCard(next.id), 350); }
-  }, 300);
+  if (next) setTimeout(() => { const el = document.getElementById('jcard-' + next.id); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setTimeout(() => toggleJobDetail(next.id), 350); } }, 300);
 }
-
 function markReady(id) {
   const j = jobs.find(x => x.id === id); if (!j) return;
-  j.status = 'ready'; save(); renderJobs(); showToast('Moved to ready!');
+  j.status = 'ready'; save(); refreshCurrentPage(); updateStats(); showToast('Moved to ready!');
 }
-
 function deleteJob(id) {
-  if (!confirm('Remove this job from your pipeline?')) return;
-  jobs = jobs.filter(j => j.id !== id); save(); renderJobs(); showToast('Job removed.');
+  if (!confirm('Remove this job?')) return;
+  jobs = jobs.filter(j => j.id !== id); save(); refreshCurrentPage(); updateStats(); showToast('Job removed.');
+}
+function refreshCurrentPage() {
+  if (currentPage === 'dashboard') renderDash();
+  else if (currentPage === 'pipeline') renderPipeline();
+  else if (currentPage === 'applied') renderApplied();
 }
 
-// ── form ───────────────────────────────────────────────
-function openForm() {
-  editingId = null;
-  document.getElementById('form-step-title').textContent = 'Add a new job';
-  clearForm();
-  showStep('jd');
-  document.getElementById('add-form').classList.add('open');
-  document.getElementById('add-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function openEdit(id) {
-  const j = jobs.find(x => x.id === id); if (!j) return;
-  editingId = id;
-  document.getElementById('form-step-title').textContent = 'Edit job';
-  document.getElementById('f-title').value = j.title || '';
-  document.getElementById('f-company').value = j.company || '';
-  document.getElementById('f-loc').value = j.loc || '';
-  document.getElementById('f-type').value = j.type || 'Full-time';
-  document.getElementById('f-drive').value = j.driveLink || '';
-  document.getElementById('f-url').value = j.applyUrl || '';
-  document.getElementById('f-jd').value = j.jd || '';
-  document.getElementById('f-notes').value = j.notes || '';
-  document.getElementById('f-status').value = j.status || 'tailoring';
-  document.getElementById('ai-badge-wrap').innerHTML = '';
-  showStep('fields');
-  document.getElementById('add-form').classList.add('open');
-  document.getElementById('add-form').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function closeForm() {
-  document.getElementById('add-form').classList.remove('open');
-  editingId = null; clearForm();
-}
-
-function clearForm() {
-  ['f-title','f-company','f-loc','f-drive','f-url','f-jd','f-notes'].forEach(id => {
-    const el = document.getElementById(id); if (el) el.value = '';
+// ══════════════════════════════════════════
+//  ADD JOB FLOW
+// ══════════════════════════════════════════
+function goStep(n) {
+  document.querySelectorAll('.step-panel').forEach((p,i) => p.classList.toggle('active', i + 1 === n));
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById('sdot-'+i);
+    const lbl = document.getElementById('slbl-'+i);
+    if (i < n) { dot.className='step-dot done'; dot.innerHTML='<i class="ti ti-check" style="font-size:10px"></i>'; }
+    else if (i === n) { dot.className='step-dot active'; dot.textContent=i; if(lbl)lbl.style.color='var(--text)'; }
+    else { dot.className='step-dot todo'; dot.textContent=i; if(lbl)lbl.style.color='var(--text3)'; }
   });
-  document.getElementById('jd-input').value = '';
-  document.getElementById('f-type').value = 'Full-time';
-  document.getElementById('f-status').value = 'tailoring';
-  document.getElementById('ai-badge-wrap').innerHTML = '';
-  document.querySelectorAll('.ff input.ai-filled,.ff textarea.ai-filled').forEach(el => el.classList.remove('ai-filled'));
-  document.getElementById('parse-status').style.display = 'none';
-  document.getElementById('parse-btn').disabled = false;
+  if (n === 2) document.getElementById('back-to-2-btn').style.display = '';
+  else if (n === 3 && !parsedData) document.getElementById('back-to-2-btn').style.display = 'none';
 }
+function skipToStep3() { parsedData = null; document.getElementById('back-to-2-btn').style.display = 'none'; goStep(3); }
 
-function showStep(step) {
-  document.getElementById('step-jd').style.display = step === 'jd' ? 'block' : 'none';
-  document.getElementById('step-fields').className = step === 'fields' ? 'step-fields open' : 'step-fields';
-}
-
-function skipToFields() { showStep('fields'); }
-function backToJD() { showStep('jd'); }
-
-// ── AI parse ───────────────────────────────────────────
 async function parseJD() {
-  const jdText = document.getElementById('jd-input').value.trim();
+  const jdText = document.getElementById('jd-paste').value.trim();
   if (!jdText) { alert('Paste a job description first.'); return; }
   const apiKey = getApiKey();
-  if (!apiKey) {
-    document.getElementById('api-banner').classList.add('show');
-    document.getElementById('api-key-input').focus();
-    showToast('Add your API key first to use auto-fill.');
-    return;
-  }
+  if (!apiKey) { document.getElementById('api-warn').classList.add('show'); nav('dashboard'); showToast('Add your API key in Settings first.'); return; }
   const btn = document.getElementById('parse-btn');
   const status = document.getElementById('parse-status');
-  btn.disabled = true; btn.style.display = 'none';
-  status.style.display = 'flex';
+  btn.style.display = 'none'; status.style.display = 'flex';
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 800,
-        messages: [{
-          role: 'user',
-          content: `Extract job details from this job description and respond ONLY with valid JSON, no markdown, no explanation. Use this exact structure:
-{"title":"","company":"","location":"","type":"Full-time","summary":""}
-- title: job title
-- company: company name
-- location: city, state (include Remote/Hybrid if mentioned)
-- type: one of: Full-time, Contract, Federal, Part-time, Remote
-- summary: 3-4 sentence summary of key requirements and responsibilities
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role: 'user', content: `Extract job details from this job description. Return ONLY valid JSON, no markdown, no preamble.
+
+{
+  "title": "exact job title",
+  "company": "company name",
+  "location": "city, state (include Remote/Hybrid if mentioned)",
+  "type": "one of: Full-time, Contract, Federal, Part-time, Remote",
+  "summary": "2-3 sentence summary of the role",
+  "highlights": ["5-7 key requirements or selling points as short bullet strings"],
+  "salary": "salary range if mentioned, else empty string",
+  "clearance": "security clearance requirement if any, else empty string"
+}
 
 Job description:
-${jdText.slice(0, 4000)}`
-        }]
+${jdText.slice(0, 5000)}` }]
       })
     });
     const data = await res.json();
     if (data.error) throw new Error(data.error.message);
     const raw = data.content[0].text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(raw);
+    parsedData = JSON.parse(raw);
+    parsedData.rawJD = jdText;
     // fill fields
-    const fields = {
-      'f-title': parsed.title || '',
-      'f-company': parsed.company || '',
-      'f-loc': parsed.location || '',
-      'f-jd': parsed.summary || jdText.slice(0, 800)
-    };
-    Object.entries(fields).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (el && val) { el.value = val; el.classList.add('ai-filled'); }
-    });
-    if (parsed.type) document.getElementById('f-type').value = parsed.type;
-    document.getElementById('ai-badge-wrap').innerHTML = `<div class="ai-badge"><i class="ti ti-sparkles"></i>Auto-filled by Claude — review and adjust</div>`;
-    showStep('fields');
-    showToast('Details extracted!');
+    document.getElementById('f-title').value = parsedData.title || '';
+    document.getElementById('f-company').value = parsedData.company || '';
+    document.getElementById('f-loc').value = parsedData.location || '';
+    if (parsedData.type) document.getElementById('f-type').value = parsedData.type;
+    document.getElementById('f-jd').value = parsedData.summary + (parsedData.highlights ? '\n\nKey requirements:\n' + parsedData.highlights.join('\n') : '');
+    ['f-title','f-company','f-loc','f-jd'].forEach(id => { const el = document.getElementById(id); if (el && el.value) el.classList.add('ai-filled'); });
+    // build preview
+    buildParsedPreview(parsedData);
+    goStep(2);
   } catch (err) {
-    console.error(err);
-    showToast('Could not parse — fill in manually.');
-    showStep('fields');
+    console.error(err); showToast('Parse failed — filling in manually.');
+    skipToStep3();
   } finally {
-    btn.disabled = false; btn.style.display = '';
-    status.style.display = 'none';
+    btn.style.display = ''; status.style.display = 'none';
   }
+}
+
+function buildParsedPreview(d) {
+  const chips = [
+    { v: d.type, cls: 'badge-blue', bg: 'var(--blue-bg)', bc: 'var(--blue-line)', col: 'var(--blue)' },
+    { v: d.location, cls: '', bg: 'var(--bg5)', bc: 'var(--line2)', col: 'var(--text2)' },
+    { v: d.salary, cls: '', bg: 'var(--green-bg)', bc: 'var(--green-line)', col: 'var(--green)' },
+    { v: d.clearance, cls: '', bg: 'var(--amber-bg)', bc: 'var(--amber-line)', col: 'var(--amber)' },
+  ].filter(c => c.v);
+  document.getElementById('parsed-preview').innerHTML = `
+    <div class="parsed-badge"><i class="ti ti-sparkles"></i>Extracted by Claude — review below</div>
+    <div class="parsed-title">${d.title || 'Unknown Title'}</div>
+    <div class="parsed-co">${d.company || 'Unknown Company'}</div>
+    <div class="parsed-chips">${chips.map(c => `<span class="parsed-chip" style="background:${c.bg};border-color:${c.bc};color:${c.col}">${c.v}</span>`).join('')}</div>
+    ${d.summary ? `<div style="font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:12px">${d.summary}</div>` : ''}
+    ${d.highlights && d.highlights.length ? `<div class="highlights">${d.highlights.map(h => `<div class="highlight"><i class="ti ti-check"></i><span>${h}</span></div>`).join('')}</div>` : ''}`;
 }
 
 function saveJob() {
@@ -661,34 +832,221 @@ function saveJob() {
     }
     showToast('Job updated!');
   } else {
-    jobs.unshift({
-      id: nextId++,
-      title, company,
-      loc: document.getElementById('f-loc').value.trim() || 'Remote',
-      type: document.getElementById('f-type').value,
-      status: document.getElementById('f-status').value,
-      appliedDate: null,
-      driveLink: document.getElementById('f-drive').value.trim(),
-      applyUrl: document.getElementById('f-url').value.trim(),
-      jd: document.getElementById('f-jd').value.trim(),
-      notes: document.getElementById('f-notes').value.trim(),
-      colorIdx: Math.floor(Math.random() * COLORS.length)
-    });
+    jobs.unshift({ id: nextId++, title, company, loc: document.getElementById('f-loc').value.trim() || 'TBD', type: document.getElementById('f-type').value, status: document.getElementById('f-status').value, appliedDate: null, driveLink: document.getElementById('f-drive').value.trim(), applyUrl: document.getElementById('f-url').value.trim(), jd: document.getElementById('f-jd').value.trim(), notes: document.getElementById('f-notes').value.trim(), colorIdx: Math.floor(Math.random() * COLORS.length) });
     showToast('Job added!');
   }
-  save(); closeForm(); renderJobs();
+  save(); updateStats(); clearAddForm(); nav('dashboard');
 }
 
-// ── toast ──────────────────────────────────────────────
+function cancelAdd() { clearAddForm(); nav('dashboard'); }
+function clearAddForm() {
+  editingId = null; parsedData = null;
+  ['f-title','f-company','f-loc','f-drive','f-url','f-jd','f-notes'].forEach(id => { const el = document.getElementById(id); if(el){ el.value=''; el.classList.remove('ai-filled'); }});
+  document.getElementById('jd-paste').value = '';
+  document.getElementById('f-type').value = 'Full-time';
+  document.getElementById('f-status').value = 'tailoring';
+  document.getElementById('add-page-title').textContent = 'Add new job';
+  document.getElementById('parsed-preview').innerHTML = '';
+  goStep(1);
+}
+
+function openEdit(id) {
+  const j = jobs.find(x => x.id === id); if (!j) return;
+  editingId = id;
+  document.getElementById('add-page-title').textContent = 'Edit job';
+  document.getElementById('f-title').value = j.title||'';
+  document.getElementById('f-company').value = j.company||'';
+  document.getElementById('f-loc').value = j.loc||'';
+  document.getElementById('f-type').value = j.type||'Full-time';
+  document.getElementById('f-drive').value = j.driveLink||'';
+  document.getElementById('f-url').value = j.applyUrl||'';
+  document.getElementById('f-jd').value = j.jd||'';
+  document.getElementById('f-notes').value = j.notes||'';
+  document.getElementById('f-status').value = j.status||'tailoring';
+  document.getElementById('back-to-2-btn').style.display = 'none';
+  parsedData = null;
+  goStep(3);
+  nav('addjob');
+}
+
+// ══════════════════════════════════════════
+//  MASTER RESUME
+// ══════════════════════════════════════════
+async function handleResumeUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
+  processResumeFile(file);
+}
+async function processResumeFile(file) {
+  try {
+    const arrBuf = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer: arrBuf });
+    const text = result.value;
+    localStorage.setItem('applyos_master_resume', text);
+    localStorage.setItem('applyos_resume_name', file.name);
+    showResumeStored(file.name, text);
+    showToast('Resume uploaded!');
+  } catch (err) { console.error(err); showToast('Could not read file. Make sure it is a .docx'); }
+}
+function showResumeStored(name, text) {
+  document.getElementById('resume-upload-zone').style.display = 'none';
+  const stored = document.getElementById('resume-stored');
+  stored.style.display = 'flex';
+  document.getElementById('resume-name').textContent = localStorage.getItem('applyos_resume_name') || name;
+  document.getElementById('resume-sub').textContent = `${(text.length / 1000).toFixed(1)}k characters · ready for tailoring`;
+  document.getElementById('resume-preview-wrap').style.display = 'block';
+  document.getElementById('resume-preview').textContent = text.slice(0, 1200) + (text.length > 1200 ? '\n...' : '');
+}
+function savePrompt() {
+  localStorage.setItem('applyos_prompt', document.getElementById('tailor-prompt').value);
+  showToast('Instructions saved!');
+}
+
+// ══════════════════════════════════════════
+//  TAILOR RESUME
+// ══════════════════════════════════════════
+async function openTailor(jobId) {
+  const apiKey = getApiKey();
+  if (!apiKey) { showToast('Add your API key in Settings first.'); nav('settings'); return; }
+  const masterResume = getMasterResume();
+  if (!masterResume) { showToast('Upload your master resume first.'); nav('resume'); return; }
+  const job = jobs.find(j => j.id === jobId); if (!job) return;
+  tailorJobId = jobId;
+  generatedResumeText = '';
+  document.getElementById('tailor-modal-title').textContent = `Tailoring for: ${job.title} at ${job.company}`;
+  document.getElementById('tailor-status').style.display = 'flex';
+  document.getElementById('tailor-status-txt').textContent = 'Generating tailored resume...';
+  document.getElementById('tailor-output').style.display = 'none';
+  document.getElementById('resume-html-output').innerHTML = '';
+  document.getElementById('tailor-modal').classList.add('open');
+  try {
+    const prompt = getTailorPrompt();
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 2000,
+        messages: [{ role: 'user', content: `${prompt}
+
+MASTER RESUME:
+${masterResume}
+
+JOB TITLE: ${job.title}
+COMPANY: ${job.company}
+JOB DESCRIPTION:
+${job.jd || 'No JD provided — tailor based on title and company only.'}
+
+Generate the tailored resume now. Use markdown formatting: # for name/contact header, ## for sections (SUMMARY, EXPERIENCE, EDUCATION, ACHIEVEMENTS), ### for job titles with company and dates.` }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+    generatedResumeText = data.content[0].text;
+    const html = mdToHtml(generatedResumeText);
+    document.getElementById('resume-html-output').innerHTML = html;
+    document.getElementById('tailor-status').style.display = 'none';
+    document.getElementById('tailor-output').style.display = 'block';
+  } catch (err) {
+    console.error(err);
+    document.getElementById('tailor-status-txt').textContent = 'Error: ' + err.message;
+  }
+}
+
+function mdToHtml(md) {
+  let h = md
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/^[-*] (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+    .replace(/\n{2,}/g, '</p><p>')
+    .replace(/^(?!<[hul])(.+)$/gm, '<p>$1</p>');
+  return h;
+}
+
+function closeTailorModal() { document.getElementById('tailor-modal').classList.remove('open'); }
+
+function copyResumeText() {
+  navigator.clipboard.writeText(generatedResumeText).then(() => showToast('Copied to clipboard!')).catch(() => showToast('Copy failed — try selecting manually.'));
+}
+
+async function downloadDocx() {
+  if (!generatedResumeText) return;
+  const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, LevelFormat } = docx;
+  const lines = generatedResumeText.split('\n');
+  const children = [];
+  const bullets = { reference: 'bullets', levels: [{ level: 0, format: LevelFormat.BULLET, text: '\u2022', alignment: AlignmentType.LEFT, style: { paragraph: { indent: { left: 360, hanging: 180 } } } }] };
+
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) { children.push(new Paragraph({ children: [new TextRun('')], spacing: { after: 0 } })); continue; }
+    if (t.startsWith('# ')) {
+      const name = t.slice(2);
+      children.push(new Paragraph({ children: [new TextRun({ text: name, bold: true, size: 28, font: 'Arial', color: '1a1a2e' })], alignment: AlignmentType.CENTER, spacing: { after: 40 } }));
+    } else if (t.startsWith('## ')) {
+      const sec = t.slice(3).toUpperCase();
+      children.push(new Paragraph({ children: [new TextRun({ text: sec, bold: true, size: 18, font: 'Arial', color: '1a3a6e' })], border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '1a3a6e', space: 1 } }, spacing: { before: 160, after: 60 } }));
+    } else if (t.startsWith('### ')) {
+      children.push(new Paragraph({ children: [new TextRun({ text: t.slice(4), bold: true, size: 19, font: 'Arial' })], spacing: { before: 100, after: 20 } }));
+    } else if (t.startsWith('- ') || t.startsWith('* ')) {
+      children.push(new Paragraph({ numbering: { reference: 'bullets', level: 0 }, children: [new TextRun({ text: t.slice(2), size: 17, font: 'Arial' })], spacing: { after: 30 } }));
+    } else if (t.startsWith('**') && t.endsWith('**')) {
+      children.push(new Paragraph({ children: [new TextRun({ text: t.slice(2, -2), bold: true, size: 17, font: 'Arial' })], spacing: { after: 30 } }));
+    } else {
+      const txt = t.replace(/\*\*(.+?)\*\*/g, '$1');
+      children.push(new Paragraph({ children: [new TextRun({ text: txt, size: 17, font: 'Arial' })], spacing: { after: 30 } }));
+    }
+  }
+
+  const job = jobs.find(j => j.id === tailorJobId);
+  const fname = job ? `${job.company}_${job.title.replace(/\s+/g,'_')}_Ankit.docx` : 'Tailored_Resume_Ankit.docx';
+
+  const doc = new Document({
+    numbering: { config: [bullets] },
+    styles: { default: { document: { run: { font: 'Arial', size: 17 } } } },
+    sections: [{ properties: { page: { size: { width: 12240, height: 15840 }, margin: { top: 720, right: 792, bottom: 720, left: 792 } } }, children }]
+  });
+
+  Packer.toBlob(doc).then(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = fname; a.click();
+    URL.revokeObjectURL(url);
+    showToast('Downloaded!');
+  });
+}
+
+// ══════════════════════════════════════════
+//  API KEY + SETTINGS
+// ══════════════════════════════════════════
+function saveApiKey() {
+  const k = document.getElementById('api-key-inp').value.trim(); if (!k) return;
+  localStorage.setItem('applyos_apikey', k);
+  document.getElementById('api-warn').classList.remove('show');
+  showToast('API key saved!');
+}
+function saveApiKeyFromSettings() {
+  const k = document.getElementById('settings-key-inp').value.trim(); if (!k) return;
+  localStorage.setItem('applyos_apikey', k);
+  document.getElementById('key-status').textContent = '✓ API key saved';
+  document.getElementById('api-warn').classList.remove('show');
+  showToast('API key saved!');
+}
+function clearAllJobs() {
+  if (!confirm('Clear ALL jobs? This cannot be undone.')) return;
+  jobs = []; nextId = 1; save(); updateStats(); renderDash(); showToast('All jobs cleared.');
+}
+
+// ══════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════
 function showToast(msg) {
   const t = document.getElementById('toast');
   document.getElementById('toast-msg').textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// ── init ───────────────────────────────────────────────
-renderJobs(); updateStats();
+updateStats();
 </script>
 </body>
 </html>
